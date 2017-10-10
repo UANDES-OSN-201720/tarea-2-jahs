@@ -14,11 +14,54 @@ how to use the page table and disk interfaces.
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+const char *algth;
+struct disk *disk;
 
 void page_fault_handler( struct page_table *pt, int page )
 {
+	
 	printf("page fault on page #%d\n",page);
-	exit(1);
+	
+	int nframes = page_table_get_nframes(pt);
+	int * marcos = malloc(nframes*sizeof(int));
+	char * physmem = page_table_get_physmem(pt);
+	//char * virtmem = page_table_get_virtmem(pt);
+	for (int i = 0; i<nframes;i++){
+		marcos[i]=-1;
+	}
+	if(!strcmp(algth,"rand")) {
+		long int rp = lrand48()%nframes;
+		printf("acaaa %ld \n",rp);
+
+		if (marcos[rp]!=-1){
+	
+			disk_write(disk, page, &physmem[rp] );						
+		}
+		marcos[rp]=page;
+		
+		page_table_set_entry(pt,page,rp,PROT_WRITE);
+		
+		page_table_print(pt);
+ 
+		
+
+	} else if (!strcmp(algth,"fifo")){
+		int rp = page%nframes;			
+		if (marcos[rp]!=-1){
+			disk_write(disk, page, &physmem[rp] );						
+		}	
+		marcos[rp]=page;
+		
+		page_table_set_entry(pt,page,rp,PROT_WRITE);
+		
+		page_table_print(pt);
+
+	}else if (!strcmp(algth,"custom")){
+
+	}else{
+		fprintf(stderr,"unknown algorithm: %s\n",algth);
+		exit(1);
+	}
 }
 
 int main( int argc, char *argv[] )
@@ -31,9 +74,12 @@ int main( int argc, char *argv[] )
 
 	int npages = atoi(argv[1]);
 	int nframes = atoi(argv[2]);
+	algth = argv[3];
 	const char *program = argv[4];
+	lrand48();
+	
 
-	struct disk *disk = disk_open("myvirtualdisk",npages);
+	disk = disk_open("myvirtualdisk",npages);
 	if(!disk) {
 		fprintf(stderr,"couldn't create virtual disk: %s\n",strerror(errno));
 		return 1;
@@ -45,10 +91,14 @@ int main( int argc, char *argv[] )
 		fprintf(stderr,"couldn't create page table: %s\n",strerror(errno));
 		return 1;
 	}
+	
+	
 
 	char *virtmem = page_table_get_virtmem(pt);
 
 	char *physmem = page_table_get_physmem(pt);
+
+	
 
 	if(!strcmp(program,"sort")) {
 		sort_program(virtmem,npages*PAGE_SIZE);
@@ -60,7 +110,7 @@ int main( int argc, char *argv[] )
 		focus_program(virtmem,npages*PAGE_SIZE);
 
 	} else {
-		fprintf(stderr,"unknown program: %s\n",argv[3]);
+		fprintf(stderr,"unknown program: %s\n",argv[4]);
 
 	}
 
