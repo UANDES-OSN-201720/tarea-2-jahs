@@ -14,25 +14,42 @@ how to use the page table and disk interfaces.
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
 const char *algth;
 struct disk *disk;
 int *frames_t;
+int contadorfaltas;
+int contadorlecturas;
+int contadorescrituras;
 
 void page_fault_handler( struct page_table *pt, int page )
 {
-	
-	printf("page fault on page #%d\n",page);
+	contadorfaltas++;
+	//printf("page fault on page #%d\n",page);
 	int nframes = page_table_get_nframes(pt);
 	char *physmem = page_table_get_physmem(pt);
 	int frame = 0; //Marco donde se cargara la pagina.
-
+	int randoms;
 	//Se elige el marco dependiendo del algoritmo.
 	if(!strcmp(algth,"rand")) {
 		frame = lrand48()%nframes;	
 	}else if (!strcmp(algth,"fifo")){
 		frame = page%nframes;
 	}else if (!strcmp(algth,"custom")){
-
+		//aleatorio pero con paridad
+		randoms=lrand48()%nframes;
+		if (page%2==0){
+		
+			while((randoms)%2!=0){
+				randoms=lrand48()%nframes;
+			}
+			
+		}else{
+			while((randoms)%2==0){
+				randoms=lrand48()%nframes;
+			}
+		}
+		frame=randoms;
 	}else{
 		fprintf(stderr,"unknown algorithm: %s\n",algth);
 		exit(1);
@@ -40,14 +57,16 @@ void page_fault_handler( struct page_table *pt, int page )
 
 	//Si hay una pagina cargada en el marco, la escribo al disco.
 	if (frames_t[frame]!=-1){
+		contadorescrituras++;
 		disk_write(disk, frames_t[frame], &physmem[frame]);						
 	}
 
 	//Leo la pagina del disco y la cargo en el marco.
 	disk_read(disk, page, &physmem[frame]);
+	contadorlecturas++;
 	frames_t[frame]=page;
 	page_table_set_entry(pt,page,frame,PROT_WRITE);
-	page_table_print(pt);
+	//page_table_print(pt);
 }
 
 int main( int argc, char *argv[] )
@@ -92,7 +111,7 @@ int main( int argc, char *argv[] )
 
 	if(!strcmp(program,"sort")) {
 		sort_program(virtmem,npages*PAGE_SIZE);
-
+		
 	} else if(!strcmp(program,"scan")) {
 		scan_program(virtmem,npages*PAGE_SIZE);
 
@@ -103,6 +122,8 @@ int main( int argc, char *argv[] )
 		fprintf(stderr,"unknown program: %s\n",argv[4]);
 
 	}
+
+	printf("%d %d %d\n",contadorfaltas,contadorlecturas,contadorescrituras);
 
 	page_table_delete(pt);
 	disk_close(disk);
