@@ -14,6 +14,7 @@ how to use the page table and disk interfaces.
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 const char *algth;
 struct disk *disk;
@@ -81,6 +82,7 @@ int main( int argc, char *argv[] )
 	int nframes = atoi(argv[2]);
 	algth = argv[3];
 	const char *program = argv[4];
+	srand48(time(NULL));
 
 	frames_t = malloc(nframes*sizeof(int)); //Tabla de largo del numero de marcos. Guarda que pagina esta cargada en cada marco.
 	//En un principio, la cargamos con -1.
