@@ -125,10 +125,12 @@ int main( int argc, char *argv[] )
 
 	}
 
-	printf("%d %d %d\n",contadorfaltas,contadorlecturas,contadorescrituras);
+	printf("número de faltas de paginas: %d\n",contadorfaltas);
+	printf("número de lecturas a disco: %d\n",contadorlecturas);
+	printf("número de escrituras a disco: %d\n",contadorescrituras);
 
 	page_table_delete(pt);
 	disk_close(disk);
-
+	free(frames_t);
 	return 0;
 }
