@@ -131,6 +131,5 @@ int main( int argc, char *argv[] )
 
 	page_table_delete(pt);
 	disk_close(disk);
-	free(frames_t);
 	return 0;
 }
