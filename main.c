@@ -74,7 +74,7 @@ int main( int argc, char *argv[] )
 {
 	if(argc!=5) {
 		/* Add 'random' replacement algorithm if the size of your group is 3 */
-		printf("use: virtmem <npages> <nframes> <rand|fifo> <sort|scan|focus>\n");
+		printf("use: virtmem <npages> <nframes> <rand|fifo|custom> <sort|scan|focus>\n");
 		return 1;
 	}
 
